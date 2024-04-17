@@ -15,6 +15,7 @@ global.author = "𝐆𝐒𝐒 𝚩𝚯𝚻𝐖𝚫";
 global.sessionName = 'session';
 global.prefa = [".", "!", "/", "?"];
 global.typemenu = "v1"
+global.menuType = "2"
 global.autoswview = true
 global.autoread = false
 global.available = false
@@ -25,7 +26,7 @@ global.onlygroup = false
 global.onlypc = false
 global.welcome = true
 global.autoBlock = true
-
+ 
 /*REPLY MESSAGE*/
 global.mess = {
     banned: '`You are *Banned* fron using commands!`',

@@ -5,7 +5,7 @@ const fonts = require('./lib/font.js');
 const menufont = require('./lib/menufont.js');
 const DB = require('./lib/scraper')
 const uploadImage = require('./lib/uploadImage.js');
-const { rentfromxeon, conns } = require('./RentBot')
+const { gssrentbot, conns } = require('./RentBot')
 const languages = require('./lib/language');
 const got = require('got');
 const more = String.fromCharCode(8206)
@@ -202,6 +202,8 @@ async function sendTypingEffect(gss, m, message, typingSpeed) {
 
 
 
+
+
 function formatBytes(bytes) {
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
   if (bytes === 0) return '0 Byte';
@@ -279,7 +281,7 @@ async function mainSys() {
          } 
      })
 
-
+ 
 
 let cpuPer 
      let p1 = cpux.usage().then(cpuPercentage => { 
@@ -392,7 +394,7 @@ try {
   if (textLower === 'send' || textLower === 'statusdown' || textLower === 'take') {
     const quotedMessage = m.msg.contextInfo.quotedMessage;
 
-    if (quotedMessage && quotedMessage.key && quotedMessage.key.remoteJid === 'status@broadcast') {
+    if (quotedMessage) {
       // Check if it's an image
       if (quotedMessage.imageMessage) {
         let imageCaption = quotedMessage.imageMessage.caption;
@@ -408,8 +410,6 @@ try {
         gss.sendMessage(m.chat, { video: { url: videoUrl }, caption: videoCaption });
         m.reply('*Status Download Successful: by Gss_Botwa*');
       }
-    } else {
-      m.reply('Please quote a message from "status@broadcast" to process.');
     }
   }
 } catch (error) {
@@ -435,7 +435,7 @@ try {
             }
     
 
-
+/*
 let chats = db.data.chats[m.chat]
             if (typeof chats !== 'object') db.data.chats[m.chat] = {}
             if (chats) {
@@ -450,6 +450,24 @@ let chats = db.data.chats[m.chat]
                 antilink: false,
             }
 
+*/
+
+
+let chats = db.data.chats[m.chat]
+if (typeof chats !== 'object') db.data.chats[m.chat] = {}
+if (chats) {
+    if (!('antiviewonce' in chats)) chats.antiviewonce = false
+    if (!('antibot' in chats)) chats.antibot = true
+    if (!('mute' in chats)) chats.mute = false
+    if (!('antilink' in chats)) chats.antilink = false
+    if (!('antidelete' in chats)) chats.antidelete = true // Add 'antidelete' if not present
+} else global.db.data.chats[m.chat] = {
+    antiviewonce: true,
+    antibot: true,
+    mute: false,
+    antilink: false,
+    antidelete: true, // Add 'antidelete' by default
+}
 
 
 	    let setting = db.data.settings[botNumber]
@@ -531,6 +549,8 @@ if (!isCreator && global.onlypc && m.isGroup) {
     return m.reply("Hello, if you want to use this bot, please chat privately with the bot.")
 }
 
+
+
         if (global.autoTyping) {
     if (m.chat) {
         gss.sendPresenceUpdate("composing", m.chat);
@@ -559,7 +579,9 @@ if (global.autoBlock && m.sender.startsWith('212')) {
     gss.updateBlockStatus(m.sender, 'block');
 }
 }
-   
+
+
+
    
 	    
 moment.tz.setDefault("Asia/Kolkata").locale("id");
@@ -902,29 +924,9 @@ const subMenus = {
 const lowerText = m.text.toLowerCase();
 
 if (command === 'menu2') {
-    await gss.sendMessage(m.chat, {
-        image: { url: 'https://telegra.ph/file/61eec5ebaeef2a046a914.jpg' },
-        caption: menuMessage,
-        contextInfo: {
-            externalAdReply: {
-                showAdAttribution: false,
-                title: botname,
-                sourceUrl: global.link,
-                body: `Bot Created By ${global.owner}`
-            }
-        }
-    }, { quoted: m });
-} else if (/^\d+$/.test(lowerText) && m.quoted) {
-        const quotedText = m.quoted.text.toLowerCase();
-
-        if (quotedText.includes(menuMessage.toLowerCase())) {
-            const selectedNumber = lowerText;
-            const subMenu = subMenus[selectedNumber];
-
-            if (subMenu !== undefined) {
-                await gss.sendMessage(m.chat, {
+        await gss.sendMessage(m.chat, {
             image: { url: 'https://telegra.ph/file/61eec5ebaeef2a046a914.jpg' },
-            caption: subMenu,
+            caption: menuMessage,
             contextInfo: {
                 externalAdReply: {
                     showAdAttribution: false,
@@ -934,106 +936,32 @@ if (command === 'menu2') {
                 }
             }
         }, { quoted: m });
-            } else {
-                await gss.sendMessage(m.chat, {text: 'Invalid menu number. Please select a number from the menu.'}, { quoted: m });
-            }
-        }
-    }
+    } else if (/^\d+$/.test(lowerText) && m.quoted) {
+        const quotedText = m.quoted.text.toLowerCase();
 
+        if (quotedText.includes(menuMessage.toLowerCase())) {
+            const selectedNumber = lowerText;
+            const subMenu = subMenus[selectedNumber];
 
-
-
-async function getYoutubeInfo(url) {
-    try {
-        const info = await ytdl.getInfo(url);
-        return info;
-    } catch (error) {
-        console.error('Error fetching video info:', error);
-        return null;
-    }
-}
-
-function formatDuration(duration) {
-    const hours = Math.floor(duration / 3600);
-    const minutes = Math.floor((duration % 3600) / 60);
-    const seconds = duration % 60;
-
-    return `${hours ? hours + 'h ' : ''}${minutes ? minutes + 'm ' : ''}${seconds}s`;
-}
-
-try {
-    if (lowerText.includes('.ytdl')) {
-        // Fetching video information
-        const urls = m.text.match(/(https?:\/\/[^\s]+)/g);
-        if (urls && urls.length > 0) {
-            videoUrl = urls[0]; // Assuming only one URL is provided
-            const info = await getYoutubeInfo(videoUrl);
-
-            if (info && info.videoDetails && info.videoDetails.thumbnail && info.videoDetails.thumbnail.thumbnails && info.videoDetails.thumbnail.thumbnails[0]) {
-                const thumbnailUrl = info.videoDetails.thumbnail.thumbnails[0].url;
-                const videoDetails = info.videoDetails;
-
-                const captionMessage = `
-╭═══════════════════╮
-│ *Video Details*
-│
-│ *URL:* ${videoUrl}
-│ *Title:* ${videoDetails.title}
-│ *Views:* ${videoDetails.viewCount}
-│ *Duration:* ${formatDuration(videoDetails.lengthSeconds)}
-│ *Size:* ${formatBytes(videoDetails.lengthBytes)}
-│1. Download as Audio
-│2. Download as Video
-╰═══════════════════╯
-`;
-
+            if (subMenu !== undefined) {
                 await gss.sendMessage(m.chat, {
-                    image: { url: thumbnailUrl },
-                    caption: captionMessage,
+                    image: { url: 'https://telegra.ph/file/61eec5ebaeef2a046a914.jpg' },
+                    caption: subMenu,
                     contextInfo: {
                         externalAdReply: {
                             showAdAttribution: false,
-                            title: botname, // Assuming botname is a string
-                            sourceUrl: global.link, // Assuming global.link is a string
-                            body: '' // Assuming global.owner is a string
+                            title: botname,
+                            sourceUrl: global.link,
+                            body: `Bot Created By ${global.owner}`
                         }
                     }
                 }, { quoted: m });
-            }
-        } else {
-            await gss.sendMessage(m.chat, { text: 'No valid URL found in the message.' }, { quoted: m });
-        }
-    } else if (m.quoted && (lowerText === '1' || lowerText === '2')) {
-        const quotedText = m.quoted.text ? m.quoted.text.toLowerCase() : '';
-        const isAudioMenu = quotedText.includes('download as audio');
-        const isVideoMenu = quotedText.includes('download as video');
-
-        if (isAudioMenu && lowerText === '1') {
-            // Handle download as audio
-            if (videoUrl) {
-                const audioStream = ytdl(videoUrl, { filter: 'audioonly' });
-                await gss.sendMessage(m.chat, { audio: audioStream, mimetype: 'audio/mpeg' }, { quoted: m });
-
             } else {
-                await gss.sendMessage(m.chat, { text: 'No valid audio URL found in the quoted message.' }, { quoted: m });
+                await gss.sendMessage(m.chat, { text: 'Invalid menu number. Please select a number from the menu.' }, { quoted: m });
             }
-        } else if (isVideoMenu && lowerText === '2') {
-            // Handle download as video
-            if (videoUrl) {
-                const videoStream = ytdl(videoUrl, { filter: 'audioandvideo', quality: 'highest' });
-                await gss.sendMessage(m.chat, { video: videoStream, mimetype: 'video/mp4', caption: 'Downloaded' });
-            } else {
-                await gss.sendMessage(m.chat, { text: 'No valid video URL found in the quoted message.' }, { quoted: m });
-            }
-        } else {
-            // Handle invalid selection
-            await gss.sendMessage(m.chat, { text: 'Invalid selection. Please select option 1 or 2 from the menu.' }, { quoted: m });
         }
     }
-} catch (error) {
-    console.error('Error:', error);
-    await gss.sendMessage(m.chat, { text: 'An error occurred. Please try again later.' }, { quoted: m });
-}
+
 
 	    
         switch(command) {
@@ -1050,7 +978,7 @@ try {
             case 'rentbot': {
 if (isBan) return m.reply(mess.banned);
         if (isBanChat) return m.reply(mess.bangc);
-    rentfromxeon(gss, m, m.from, args);
+   gssrentbot(gss, m, m.from, args);
 }
 break;
             
@@ -4631,6 +4559,16 @@ case 'setmenu': {
 }
 break;
 
+case 'menutype': {
+  if (isBan) return m.reply(mess.banned);
+        if (isBanChat) return m.reply(mess.bangc);
+    if (!isCreator) return m.reply(mess.owner);
+    if (!text) return m.reply('menuType 1 for reply menu\nmenuType 2 for pollmenu');
+    menuType = text;
+    m.reply(mess.success);
+}
+break;
+
 case 'onlygroup': {
   if (isBan) return m.reply(mess.banned);
         if (isBanChat) return m.reply(mess.bangc);
@@ -5638,9 +5576,7 @@ case 'bass': case 'blown': case 'deep': case 'earrape': case 'fast': case 'fat':
     }
     break;
 
-
-            
-            case 'menu':
+case 'menu':
 case 'help':
 case 'list':
 case 'listmenu':
@@ -5650,6 +5586,8 @@ case 'listmenu':
     gss.sendPoll(m.chat, "List Menu", ['.Allmenu', '.Groupmenu', '.Downloadmenu', '.Searchmenu', '.Funmenu', '.Toolmenu', '.Convertmenu', '.aimenu', '.Mainmenu', '.Ownermenu'], { quoted: m });
 }
 break;
+
+            
 
 function getRandomSymbol() {
     const symbols = ['◉', '★', '◎', '✯','✯','✰','◬','✵','✦']; // Add more symbols as needed
@@ -6195,32 +6133,6 @@ break;
                         if (stdout) return m.reply(stdout)
                     })
                 }
-			
-		if (m.chat.endsWith('@s.whatsapp.net') && isCmd) {
-                    let room = Object.values(db.data.anonymous).find(room => [room.a, room.b].includes(m.sender) && room.state === 'CHATTING')
-                    if (room) {
-                        if (/^.*(next|leave|start)/.test(m.text)) return
-                        if (['.next', '.leave', '.stop', '.start', 'Cari Partner', 'Keluar', 'Lanjut', 'Stop'].includes(m.text)) return
-                        let other = [room.a, room.b].find(user => user !== m.sender)
-                        m.copyNForward(other, true, m.quoted && m.quoted.fromMe ? {
-                            contextInfo: {
-                                ...m.msg.contextInfo,
-                                forwardingScore: 99999,
-                                isForwarded: true,
-                                participant: other
-                            }
-                        } : {})
-                    }
-                    return !0
-                }
-			
-		if (isCmd && budy.toLowerCase() != undefined) {
-		    if (m.chat.endsWith('broadcast')) return
-		    if (m.isBaileys) return
-		    let msgs = global.db.data.database
-		    if (!(budy.toLowerCase() in msgs)) return
-		    gss.copyNForward(m.chat, msgs[budy.toLowerCase()], true)
-		}
         
     } catch (err) {
         m.reply(util.format(err))
