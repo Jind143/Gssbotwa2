@@ -39,7 +39,7 @@ global.mess = { ꒒ ০ ⌵ ୧ ♡ HASNAIN
     private: '`Feature is used only for private chats!`',
     bot: '`Bot number user special features`',
     wait: '*Thora sa wait karein *',
-    endLimit: '`Your daily limit has expired, the limit will be reset every 12 hours`',
+    endLimit: '`Your daily limit has expired, the limit will be reset every 24 hours`',
 };
 
 global.limitawal = {
